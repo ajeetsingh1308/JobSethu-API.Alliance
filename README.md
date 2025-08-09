@@ -1,2 +1,14 @@
 # JobSethu-API.Alliance
-Your community's go-to marketplace for local gigs. 🤝 Job Sethu uses AI to create better job listings and connect students or freelancers with residents needing short-term help. Features user profiles, secure applications, and real-time chat. Tech: Next.js, Firebase, AI.
+Job Sethu is a full-stack web application designed as a hyper-local marketplace to connect individuals seeking short-term work (gigs) with those offering it within their community. Powered by AI, the platform      simplifies the job posting and application process, making it easier for local talent like students and freelancers to find flexible work, and for residents to get help with tasks like tutoring, gardening, or event support.
+
+## Team Members
+1) Ajeet Singh - 
+2) Akshay Koujalgi - 
+3) Pranav Kokitkar - 
+4) Shubham Galve -
+5) Vedanth Bandodkar -
+   
+## Tech Stack
+* Front-end: Next.js, React, TypeScript, Tailwind CSS, ShadCN UI
+* Back-end & AI: Firebase (Firestore, Storage), Google Genkit with Gemini, Next.js Server Actions
+* For more details: https://docs.google.com/document/d/1rtp2HA59r7MuG58mrIxwJN3S9oWGyJ3cjPIOsgYI2S0/edit?tab=t.0
