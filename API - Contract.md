@@ -116,3 +116,44 @@ Get User Profile
 - Path: /api/users/{id}
 - Auth Required: Yes (self or admin)
 
+2. Job Management
+Create Job
+Method: POST
+
+Path: /api/jobs
+
+Auth Required: ✅ (logged-in user)
+
+Validation: Title, description, payment, category, location required
+
+Request Body:
+
+json
+Copy
+Edit
+{
+  "title": "Fix kitchen tap",
+  "description": "The tap is leaking and needs repair.",
+  "location": "Margao",
+  "payment": 300,
+  "category": "Plumbing",
+  "urgencyFlag": true
+}
+Update Job
+Auth Required: ✅ (only poster)
+
+Validation: Same as create job
+
+Delete Job
+Auth Required: ✅ (only poster)
+
+3. Applications
+Apply for Job: Auth required, cannot apply to own job
+
+Select Worker: Auth required, only poster can select
+
+4. Chat
+Auth Required: ✅ (only poster & selected worker)
+
+5. Reviews
+Auth Required: ✅ (only users involved in completed job)
