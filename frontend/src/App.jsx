@@ -83,7 +83,7 @@ function App() {
             onClick={() => setShowModal(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow"
           >
-            + Add Event
+            + Add Job
           </button>
         </div>
       </div>
@@ -122,3 +122,4 @@ function App() {
 }
 
 export default App;
+
