@@ -4,399 +4,463 @@ This document serves as the single source of truth for the Job Sethu application
 
 ## 1. Application Features
 
-- **User Registration & Login:** New users can create an account and log in. Assumes JWT-based authentication.
-- **User Profile Management:** Users can view, update, and delete their own profiles.
-- **Job Posting:** Authenticated users can create, view, update, and delete job postings.
-- **Job Browsing & Discovery:** Users can view a feed of all open jobs and filter them by category, location, or urgency.
-- **Job Application:** Authenticated users can apply for open jobs.
-- **Job Selection:** Job posters can view applicants for their jobs and select/assign a worker.
-- **Chat System:** A real-time chat system for communication between a job poster and the assigned worker.
-- **Job Lifecycle Management:** Workers can mark jobs as completed, and posters can confirm completion and payment status.
-- **Reviews and Ratings:** Users can leave reviews and ratings for each other after a job is completed.
+## ✨ Features
+- 🔑 **User Authentication** -- Secure signup/login using **Supabase Auth**
+- 📂 **Skill-based Profiles** -- Workers showcase their skills & experience
+- 📢 **AI Job Posting** -- Auto-generate detailed job descriptions with **Genkit**
+- 🗂️ **Job Feed & Search** -- Browse and filter local job opportunities
+- 💬 **Real-time Chat** -- In-app messaging with AI reply suggestions
+- 💳 **Secure Payments** -- Seamless transactions powered by **Razorpay**
+- 📍 **Location-aware** -- Match jobs and workers by proximity (via PostGIS)
+- 📷 **File & Image Uploads** -- Store resumes, documents, and job images in **Supabase Storage**
+- 📊 **Dashboard** -- Track job postings, applications, and payments
+
 
 ---
 
-## 2. Data Models
+Job Sethu API Documentation
+===========================
 
-### User Model
+This document serves as the single source of truth for all API communication between the Job Sethu frontend and the backend.
 
-Represents a user of the platform.
+Authentication is handled via a JWT provided by Supabase. All protected API endpoints require the token in the request header: `Authorization: Bearer <SUPABASE_JWT>`
 
-```json
-{
-  "id": "user-123",
-  "name": "Vedanth Bandodkar",
-  "email": "vedanth@example.com",
-  "phone": "9876543210",
-  "location": "Panjim, Goa",
-  "skills": ["React", "Node.js", "Web Design"],
-  "rating": 4.8,
-  "reviews": ["review-abc", "review-def"]
-}
-```
+Of course. Here is the complete API documentation for your project, including the detailed JSON request and response bodies for every endpoint.
 
-### Job Model
+### **Authentication & User Profile**
 
-Represents a job posting on the platform.
+#### **1. Sign Up User**
 
-```json
-{
-  "id": "job-456",
-  "title": "Simple Website for a Local Cafe",
-  "description": "Need a student to build a one-page responsive website for a new cafe. Should be mobile-friendly.",
-  "location": "Panjim, Goa",
-  "payment": 5000,
-  "category": "Web Development",
-  "urgencyFlag": false,
-  "postedBy": "user-789",
-  "applicants": ["user-123"],
-  "selectedWorkerId": null,
-  "status": "open", // 'open', 'assigned', 'completed', 'paid', 'canceled'
-  "createdAt": "2023-10-27T10:00:00Z"
-}
-```
-
-### Application Model
-
-Represents a user's application for a specific job.
-
-```json
-{
-  "id": "app-xyz",
-  "jobId": "job-456",
-  "applicantId": "user-123",
-  "status": "pending", // 'pending', 'accepted', 'rejected'
-  "appliedAt": "2023-10-27T11:30:00Z"
-}
-```
-
-### ChatMessage Model
-
-Represents a single message in a chat conversation.
-
-```json
-{
-  "id": "msg-1a2b",
-  "jobId": "job-456",
-  "senderId": "user-123",
-  "message": "Hi! I'm interested in this job. When can we discuss?",
-  "timestamp": "2023-10-27T12:00:00Z"
-}
-```
-
-### Review Model
-
-Represents a review left by one user for another after a job is completed.
-
-```json
-{
-  "id": "review-abc",
-  "reviewerId": "user-789",
-  "reviewedUserId": "user-123",
-  "jobId": "job-456",
-  "rating": 5,
-  "comment": "Excellent work! Very professional and delivered on time.",
-  "createdAt": "2023-11-05T14:00:00Z"
-}
-```
-
----
-
-## 3. API Endpoints
-
-All endpoints are prefixed with `/api`. Authentication is required for all endpoints except `Login` and `Register`.
-
-### Authentication
-
-#### Feature: User Registration
-- **Method:** `POST`
-- **Endpoint:** `/api/auth/register`
-- **Description:** Creates a new user account.
-- **Request Body:**
-  ```json
-  {
-    "name": "Namir Khan",
-    "email": "namir@example.com",
-    "password": "securepassword123",
-    "phone": "9988776655",
-    "location": "Margao, Goa"
-  }
-  ```
-- **Success Response (201):**
-  ```json
-  {
-    "user": {
-      "id": "user-124",
-      "name": "Namir Khan",
-      "email": "namir@example.com"
-    },
-    "token": "ey..."
-  }
-  ```
-- **Error Response (400):**
-  ```json
-  {
-    "message": "Email already exists."
-  }
-  ```
-
-#### Feature: User Login
-- **Method:** `POST`
-- **Endpoint:** `/api/auth/login`
-- **Description:** Authenticates a user and returns a JWT.
-- **Request Body:**
-  ```json
-  {
-    "email": "namir@example.com",
-    "password": "securepassword123"
-  }
-  ```
-- **Success Response (200):**
-  ```json
-  {
-    "user": {
-      "id": "user-124",
-      "name": "Namir Khan",
-      "email": "namir@example.com"
-    },
-    "token": "ey..."
-  }
-  ```
-- **Error Response (401):**
-  ```json
-  {
-    "message": "Invalid credentials."
-  }
-  ```
-
-### Users
-
-#### Feature: Get User Profile
-- **Method:** `GET`
-- **Endpoint:** `/api/users/:userId`
-- **Description:** Retrieves the public profile of a specific user.
-- **Request Body:** None
-- **Success Response (200):**
-  ```json
-  {
-    "id": "user-123",
-    "name": "Vedanth Bandodkar",
-    "location": "Panjim, Goa",
-    "skills": ["React", "Node.js"],
-    "rating": 4.8
-  }
-  ```
-- **Error Response (404):**
-  ```json
-  {
-    "message": "User not found."
-  }
-  ```
-
-#### Feature: Update User Profile
-- **Method:** `PUT`
-- **Endpoint:** `/api/users/me`
-- **Description:** Updates the profile of the currently authenticated user.
-- **Request Body:**
-  ```json
-  {
-    "name": "Vedanth B.",
-    "location": "Bambolim, Goa",
-    "skills": ["React", "Next.js", "Firebase"]
-  }
-  ```
-- **Success Response (200):**
-  ```json
-  {
-    "id": "user-123",
-    "name": "Vedanth B.",
-    "email": "vedanth@example.com",
-    "location": "Bambolim, Goa",
-    "skills": ["React", "Next.js", "Firebase"]
-  }
-  ```
-- **Error Response (400):**
-  ```json
-  {
-    "message": "Validation Error: Skills must be an array of strings."
-  }
-  ```
-  
-#### Feature: Delete User Profile
-- **Method:** `DELETE`
-- **Endpoint:** `/api/users/me`
-- **Description:** Deletes the profile of the currently authenticated user.
-- **Request Body:** None
-- **Success Response (200):**
-  ```json
-  {
-    "message": "User account deleted successfully."
-  }
-  ```
-- **Error Response (401):**
-  ```json
-  {
-    "message": "Authentication required."
-  }
-  ```
-
-### Jobs
-
-#### Feature: Get All Jobs
-- **Method:** `GET`
-- **Endpoint:** `/api/jobs`
-- **Description:** Retrieves a list of all `open` jobs. Can be filtered by query parameters (e.g., `/api/jobs?category=Web%20Development&location=Panjim`).
-- **Request Body:** None
-- **Success Response (200):**
-  ```json
-  [
+  * **Endpoint**: `POST /api/auth/signup`
+  * **Description**: Creates a new user account.
+  * **Request Body**:
+    ```json
     {
-      "id": "job-456",
-      "title": "Simple Website for a Local Cafe",
-      "location": "Panjim, Goa",
-      "payment": 5000,
-      "category": "Web Development",
-      "urgencyFlag": false,
-      "status": "open",
-      "createdAt": "2023-10-27T10:00:00Z"
+      "email": "test.user@example.com",
+      "password": "strongpassword123",
+      "full_name": "Test User"
     }
-  ]
-  ```
-
-#### Feature: Get Single Job
-- **Method:** `GET`
-- **Endpoint:** `/api/jobs/:jobId`
-- **Description:** Retrieves the full details of a single job.
-- **Success Response (200):** (Returns the full Job Model object)
-
-#### Feature: Post a New Job
-- **Method:** `POST`
-- **Endpoint:** `/api/jobs`
-- **Description:** Creates a new job posting.
-- **Request Body:**
-  ```json
-  {
-    "title": "Urgent: Edit a Short College Project Video",
-    "description": "Need to quickly edit a 5-minute video. Just trimming clips and adding music.",
-    "location": "Remote",
-    "payment": 1500,
-    "category": "Video Editing",
-    "urgencyFlag": true
-  }
-  ```
-- **Success Response (201):** (Returns the newly created Job Model object)
-
-#### Feature: Update a Job
-- **Method:** `PUT`
-- **Endpoint:** `/api/jobs/:jobId`
-- **Description:** Updates a job posting. Only the poster can update.
-- **Request Body:** (Partial Job Model)
-- **Success Response (200):** (Returns the updated Job Model object)
-- **Error Response (403):** `{"message": "Forbidden. You are not the poster of this job."}`
-
-#### Feature: Delete a Job
-- **Method:** `DELETE`
-- **Endpoint:** `/api/jobs/:jobId`
-- **Description:** Deletes a job posting. Only the poster can delete.
-- **Success Response (200):** `{"message": "Job deleted successfully."}`
-- **Error Response (403):** `{"message": "Forbidden. You are not the poster of this job."}`
-
-### Applications & Job Lifecycle
-
-#### Feature: Apply for a Job
-- **Method:** `POST`
-- **Endpoint:** `/api/jobs/:jobId/apply`
-- **Description:** Allows an authenticated user to apply for a job.
-- **Request Body:** None
-- **Success Response (201):** (Returns the new Application Model object)
-- **Error Response (409):** `{"message": "You have already applied for this job."}`
-
-#### Feature: View Applicants for a Job
-- **Method:** `GET`
-- **Endpoint:** `/api/jobs/:jobId/applicants`
-- **Description:** Retrieves a list of users who have applied for a job. Only for the job poster.
-- **Success Response (200):**
-  ```json
-  [
+    ```
+  * **Success Response (`201 Created`)**:
+    ```json
     {
-      "applicantId": "user-123",
-      "name": "Vedanth Bandodkar",
-      "rating": 4.8
+      "message": "User created successfully. Please check your email to verify your account.",
+      "user": {
+        "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+        "email": "test.user@example.com",
+        "full_name": "Test User"
+      }
     }
-  ]
-  ```
-- **Error Response (403):** `{"message": "Forbidden. You are not the poster of this job."}`
+    ```
 
-#### Feature: Select an Applicant
-- **Method:** `PUT`
-- **Endpoint:** `/api/jobs/:jobId/select`
-- **Description:** Assigns a job to a specific applicant. Only the job poster can do this.
-- **Request Body:**
-  ```json
-  {
-    "applicantId": "user-123"
-  }
-  ```
-- **Success Response (200):**
-  ```json
-  {
-    "message": "Job assigned successfully to user-123.",
-    "job": {
-      "id": "job-456",
-      "status": "assigned",
-      "selectedWorkerId": "user-123"
+-----
+
+#### **2. Login User**
+
+  * **Endpoint**: `POST /api/auth/login`
+  * **Description**: Authenticates a user.
+  * **Request Body**:
+    ```json
+    {
+      "email": "test.user@example.com",
+      "password": "strongpassword123"
     }
-  }
-  ```
+    ```
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "message": "Login successful.",
+      "token": "supabase.jwt.token.string",
+      "user": {
+        "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+        "email": "test.user@example.com",
+        "full_name": "Test User"
+      }
+    }
+    ```
 
-#### Feature: Mark Job as Complete
-- **Method:** `PUT`
-- **Endpoint:** `/api/jobs/:jobId/complete`
-- **Description:** Marks a job as completed. Only the assigned worker can do this.
-- **Success Response (200):** `{"message": "Job marked as complete."}`
-- **Error Response (403):** `{"message": "Only the assigned worker can mark this job as complete."}`
+-----
 
-### Chat
+#### **3. Get Current User Profile**
 
-#### Feature: Get Chat Messages
-- **Method:** `GET`
-- **Endpoint:** `/api/jobs/:jobId/messages`
-- **Description:** Retrieves all chat messages for a specific job. Only accessible to the poster and assigned worker.
-- **Success Response (200):** (Returns an array of ChatMessage objects)
-- **Error Response (403):** `{"message": "You do not have access to this chat."}`
+  * **Endpoint**: `GET /api/profile`
+  * **Description**: Retrieves the profile data for the currently authenticated user.
+  * **Request Body**: None.
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+      "full_name": "Rohan Patel",
+      "email": "rohan.patel@example.com",
+      "avatar_url": "https://<...>/avatars/rohan.png",
+      "skills": ["Event Support", "Driving"],
+      "location": { "lat": 15.2993, "lon": 74.1240 }
+    }
+    ```
 
-#### Feature: Send Chat Message
-- **Method:** `POST`
-- **Endpoint:** `/api/jobs/:jobId/messages`
-- **Description:** Sends a new message in the chat for a job.
-- **Request Body:**
-  ```json
-  {
-    "message": "Sounds good. What time?"
-  }
-  ```
-- **Success Response (201):** (Returns the newly created ChatMessage object)
+-----
 
-### Reviews
+#### **4. Update User Profile (Onboarding)**
 
-#### Feature: Create a Review
-- **Method:** `POST`
-- **Endpoint:** `/api/reviews`
-- **Description:** Allows a user to review another user after a job is completed.
-- **Request Body:**
-  ```json
-  {
-    "reviewedUserId": "user-123",
-    "jobId": "job-456",
-    "rating": 5,
-    "comment": "Did a fantastic job. Highly recommended!"
-  }
-  ```
-- **Success Response (201):** (Returns the newly created Review object)
-- **Error Response (400):** `{"message": "You cannot review a user for a job that is not completed."}`
+  * **Endpoint**: `PUT /api/profile`
+  * **Description**: Updates the authenticated user's profile.
+  * **Request Body**:
+    ```json
+    {
+      "full_name": "Rohan P.",
+      "skills": ["Event Support", "Driving", "Photography"],
+      "location": { "lat": 15.3000, "lon": 74.1250 }
+    }
+    ```
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+      "full_name": "Rohan P.",
+      "email": "rohan.patel@example.com",
+      "avatar_url": "https://<...>/avatars/rohan.png",
+      "skills": ["Event Support", "Driving", "Photography"],
+      "location": { "lat": 15.3000, "lon": 74.1250 }
+    }
+    ```
 
-#### Feature: Get Reviews for a User
-- **Method:** `GET`
-- **Endpoint:** `/api/users/:userId/reviews`
-- **Description:** Retrieves all reviews for a specific user.
-- **Success Response (200):** (Returns an array of Review objects)
+-----
+
+### **Job Management**
+
+#### **5. Get All Jobs (Public Feed)**
+
+  * **Endpoint**: `GET /api/jobs`
+  * **Description**: Fetches a paginated list of all currently open job postings.
+  * **Request Body**: None.
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "jobs": [
+        {
+          "id": "j1a2b3c4-...",
+          "title": "Need help with garden weeding",
+          "amount": 200000,
+          "poster": {
+            "full_name": "Ananya Sharma"
+          }
+        }
+      ],
+      "page": 1,
+      "has_more": true
+    }
+    ```
+
+-----
+
+#### **6. Get Single Job Details**
+
+  * **Endpoint**: `GET /api/jobs/:id`
+  * **Description**: Retrieves the complete details for a single job posting.
+  * **Request Body**: None.
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "id": "j1a2b3c4-...",
+      "poster_id": "p1q2r3s4-...",
+      "title": "Need help with garden weeding",
+      "description": "Looking for someone to help clear out weeds from my vegetable patch.",
+      "amount": 200000,
+      "skills_required": ["Gardening", "Manual Labor"],
+      "image_url": "https://<...>/images/garden.png",
+      "status": "open"
+    }
+    ```
+
+-----
+
+#### **7. Create a New Job**
+
+  * **Endpoint**: `POST /api/jobs`
+  * **Description**: Creates a new job posting.
+  * **Request Body**:
+    ```json
+    {
+      "title": "Math Tutor Needed",
+      "description": "Looking for a tutor for grade 10 algebra.",
+      "amount": 500000,
+      "skills_required": ["Mathematics", "Tutoring"]
+    }
+    ```
+  * **Success Response (`201 Created`)**:
+    ```json
+    {
+      "id": "m9n8b7v6-...",
+      "poster_id": "a1b2c3d4-...",
+      "title": "Math Tutor Needed",
+      "description": "Looking for a tutor for grade 10 algebra.",
+      "amount": 500000,
+      "skills_required": ["Mathematics", "Tutoring"],
+      "status": "open"
+    }
+    ```
+
+-----
+
+#### **8. Update a Job**
+
+  * **Endpoint**: `PUT /api/jobs/:id`
+  * **Description**: Updates the details of an existing job.
+  * **Request Body**:
+    ```json
+    {
+      "description": "Updated: Looking for a tutor for grade 10 algebra and geometry.",
+      "amount": 600000
+    }
+    ```
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "id": "m9n8b7v6-...",
+      "title": "Math Tutor Needed",
+      "description": "Updated: Looking for a tutor for grade 10 algebra and geometry.",
+      "amount": 600000,
+      "status": "open"
+    }
+    ```
+
+-----
+
+#### **9. Delete a Job**
+
+  * **Endpoint**: `DELETE /api/jobs/:id`
+  * **Description**: Deletes a job posting.
+  * **Request Body**: None.
+  * **Success Response (`204 No Content`)**: No JSON body is returned.
+
+-----
+
+### **Job Applications**
+
+#### **10. Apply for a Job**
+
+  * **Endpoint**: `POST /api/jobs/:id/apply`
+  * **Description**: Allows a user to submit an application for a specific job.
+  * **Request Body**: None.
+  * **Success Response (`201 Created`)**:
+    ```json
+    {
+      "id": "app1a2b3-...",
+      "job_id": "j1a2b3c4-...",
+      "applicant_id": "u9p8o7i6-...",
+      "status": "pending"
+    }
+    ```
+
+-----
+
+#### **11. Get Applicants for a Job**
+
+  * **Endpoint**: `GET /api/jobs/:id/applicants`
+  * **Description**: Retrieves a list of all users who have applied for a job.
+  * **Request Body**: None.
+  * **Success Response (`200 OK`)**:
+    ```json
+    [
+      {
+        "application_id": "app1a2b3-...",
+        "status": "pending",
+        "applicant": {
+          "id": "u9p8o7i6-...",
+          "full_name": "Priya Singh",
+          "skills": ["Gardening", "Teamwork"]
+        }
+      }
+    ]
+    ```
+
+-----
+
+#### **12. Update Application Status**
+
+  * **Endpoint**: `PUT /api/applications/:id`
+  * **Description**: Allows the job poster to accept or reject an applicant.
+  * **Request Body**:
+    ```json
+    {
+      "status": "accepted"
+    }
+    ```
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "message": "Application status updated."
+    }
+    ```
+
+-----
+
+### **Chat & Messaging**
+
+#### **13. Get Message History for a Job**
+
+  * **Endpoint**: `GET /api/jobs/:id/messages`
+  * **Description**: Retrieves the chat history for a specific job.
+  * **Request Body**: None.
+  * **Success Response (`200 OK`)**:
+    ```json
+    [
+      {
+        "id": "msg1-...",
+        "sender_id": "u9p8o7i6-...",
+        "content": "Hi, I'm interested in the gardening job.",
+        "created_at": "2025-08-16T10:30:00Z"
+      }
+    ]
+    ```
+
+-----
+
+#### **14. Send a Message**
+
+  * **Endpoint**: `POST /api/jobs/:id/messages`
+  * **Description**: Sends a new message in a job's chat.
+  * **Request Body**:
+    ```json
+    {
+      "content": "Yes, I have 2 years of landscaping experience."
+    }
+    ```
+  * **Success Response (`201 Created`)**:
+    ```json
+    {
+      "id": "msg2-...",
+      "sender_id": "p1q2r3s4-...",
+      "content": "Yes, I have 2 years of landscaping experience.",
+      "created_at": "2025-08-16T10:32:00Z"
+    }
+    ```
+
+-----
+
+### **Payment Integration (Razorpay) 💳**
+
+#### **15. Create Payment Order**
+
+  * **Endpoint**: `POST /api/jobs/:id/create-order`
+  * **Description**: Creates a Razorpay order.
+  * **Request Body**: None.
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "order_id": "order_K8yq8X5J2v6Z8Y",
+      "razorpay_key_id": "rzp_test_12345",
+      "amount": 200000,
+      "currency": "INR"
+    }
+    ```
+
+-----
+
+#### **16. Handle Razorpay Webhook**
+
+  * **Endpoint**: `POST /api/payment/webhook`
+  * **Description**: Receives and verifies notifications from Razorpay.
+  * **Request Body (from Razorpay)**:
+    ```json
+    {
+      "entity": "event",
+      "event": "payment.captured",
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_K8z...",
+            "order_id": "order_K8yq8X5J2v6Z8Y",
+            "status": "captured"
+          }
+        }
+      }
+    }
+    ```
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "status": "received"
+    }
+    ```
+
+-----
+
+#### **17. Confirm Job Completion & Initiate Payout**
+
+  * **Endpoint**: `POST /api/jobs/:id/release-funds`
+  * **Description**: Initiates a payout to the worker.
+  * **Request Body**: None.
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "message": "Payout initiated successfully.",
+      "payout_id": "pout_K9a..."
+    }
+    ```
+
+-----
+
+### **AI Features (Genkit & Gemini)**
+
+#### **18. Suggest Job Details**
+
+  * **Endpoint**: `POST /api/ai/suggest-job-details`
+  * **Description**: Generates a job description and skills.
+  * **Request Body**:
+    ```json
+    {
+      "title": "Help moving boxes to a new apartment"
+    }
+    ```
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "description": "Seeking a reliable individual to assist with moving boxes...",
+      "skills": ["Manual Labor", "Punctuality", "Physical Fitness"]
+    }
+    ```
+
+-----
+
+#### **19. Generate Job Image**
+
+  * **Endpoint**: `POST /api/ai/generate-job-image`
+  * **Description**: Generates an image for the job posting.
+  * **Request Body**:
+    ```json
+    {
+      "prompt": "A friendly person helping with gardening under a sunny sky"
+    }
+    ```
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "image_url": "https://<...>/generated-images/new-image.png"
+    }
+    ```
+
+-----
+
+#### **20. Suggest Chat Reply**
+
+  * **Endpoint**: `POST /api/ai/suggest-reply`
+  * **Description**: Generates contextual chat reply suggestions.
+  * **Request Body**:
+    ```json
+    {
+      "job_title": "Need help with garden weeding",
+      "message_history": [
+        { "sender": "applicant", "content": "Hi, is this job still available?" }
+      ]
+    }
+    ```
+  * **Success Response (`200 OK`)**:
+    ```json
+    {
+      "suggestions": [
+        "Yes, it is! Are you available this week?",
+        "Yes! Could you tell me about your experience?"
+      ]
+    }
+    ```
