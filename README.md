@@ -8,10 +8,32 @@ Job Sethu is a full-stack web application designed as a hyper-local marketplace 
 4) Shubham Galve - https://github.com/Shubhamgalave
 5) Vedanth Bandodkar - https://github.com/vedanthbandodkar
    
-## Tech Stack
-   * Front-end: React, JavaScript, Tailwind CSS, ShadCN UI
-   * Back-end & AI: Node.js, Mongodb, Gemini API(Google AI), Express.js Server Actions
-   * For more details: https://docs.google.com/document/d/15w605yh5yQ3mNejXqDA5tBQrfPFtaJf7lHOMPNNB71g/edit?addon_store&tab=t.0
+## ⚙️ Tech Stack
+
+### 💻 Frontend
+- [React](https://react.dev/) -- Component-based UI
+- [JavaScript (ES6+)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) -- Core language
+- [Tailwind CSS](https://tailwindcss.com/) -- Utility-first styling
+- [Headless UI / Radix UI](https://headlessui.dev/) -- Accessible UI primitives
+
+### ⚙️ Backend
+- [Node.js](https://nodejs.org/) -- Runtime environment
+- [Express.js](https://expressjs.com/) -- REST API server
+- [Supabase](https://supabase.com/) -- PostgreSQL, Auth, and Storage
+
+### 🤖 AI
+- [Google Genkit](https://ai.google.dev/genkit) -- AI pipelines & Gemini models
+
+### 💳 Payments
+- [Razorpay](https://razorpay.com/) -- Payment gateway
+- [RazorpayX](https://razorpay.com/x/) -- Worker payouts (future-ready)
+
+### 🛠️ DevOps
+- [Vercel](https://vercel.com/) -- Frontend hosting
+- [Render](https://render.com/) / [Railway](https://railway.app/) -- Backend hosting
+- [Supabase Cloud](https://supabase.com/) -- Managed backend services
+- 
+   * For more details: https://docs.google.com/document/d/1ICAK-k_wz_JMJeOv5u5qisgwSu6m4i2j4nPfHddA4A4/edit?tab=t.ighf13o7yep5
 
 ## API Documentation
 
@@ -56,11 +78,32 @@ Follow these instructions to set up and run the backend server on your local mac
     npm install
     ```
 
-4.  **Start the server:**
+4.  **Configure environment variables**: Create a new file named `.env` in the `backend` directory. Add your database and API keys to this file.
+
+    Bash
+
+    ```
+    # Supabase Configuration
+    SUPABASE_URL=https://<your-project-ref>.supabase.co
+    SUPABASE_ANON_KEY=your_project_anon_key
+    SUPABASE_SERVICE_ROLE_KEY=your_project_service_role_key
+
+    # Razorpay Keys
+    RAZORPAY_KEY_ID=rzp_test_your_key_id
+    RAZORPAY_KEY_SECRET=your_razorpay_secret
+
+    # Google Genkit/Gemini Keys
+    GOOGLE_API_KEY=your_gemini_api_key
+
+    ```
+
+    *Note: Replace the placeholder values with your actual keys.*
+
+5.  **Start the server:**
     ```bash
     node server.js
     ```
 
 * The server will now be running at `http://localhost:3000`.
 * The interactive API documentation will be available at `http://localhost:3000/api-docs`.
-*
+
