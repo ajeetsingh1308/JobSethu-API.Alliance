@@ -90,7 +90,7 @@ function App() {
       <div>
         <div className="px-10 py-6 flex items-center gap-7 ">
           <Card
-            title="Registered Jobs"
+            title="Registered"
             color="blue"
             count={selectedEvent.length}
           />
@@ -122,4 +122,5 @@ function App() {
 }
 
 export default App;
+
 
