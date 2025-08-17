@@ -58,9 +58,9 @@ Follow these instructions to set up and run the backend server on your local mac
 
 4.  **Start the server:**
     ```bash
-    npm start
+    node server.js
     ```
 
 * The server will now be running at `http://localhost:3000`.
-* The interactive API documentation will be available at `http://localhost:3001/api-docs`.
+* The interactive API documentation will be available at `http://localhost:3000/api-docs`.
 *
