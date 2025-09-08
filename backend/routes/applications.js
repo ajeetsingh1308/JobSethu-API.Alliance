@@ -16,7 +16,7 @@ const authenticateToken = (req, res, next) => {
   if (!token) return res.sendStatus(401);
 
   // In real code verify JWT here
-  req.user = { id: 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6' };
+  req.user = { id: 'deee8a0d-8bee-4f78-a61a-40e1d55f8daa' };
   next();
 };
 

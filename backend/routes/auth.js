@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { supabaseServiceRole } = require('../supabase');
+const bcrypt = require('bcrypt'); // Import the bcrypt library
 
 /**
  * @swagger
@@ -13,14 +14,20 @@ const { supabaseServiceRole } = require('../supabase');
 router.post('/signup', async (req, res) => {
   const { email, password, full_name } = req.body;
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Log the hashed password to the terminal for verification
+    console.log('Password received:', password);
+    console.log('Hashed password created:', hashedPassword);
+
     const { data, error } = await supabaseServiceRole
       .from('users')
-      .insert({ email, password, full_name })
+      .insert({ email, password: hashedPassword, full_name })
       .select('id, email, full_name')
       .single();
 
     if (error) {
-      if (error.code === '23505') { // PostgreSQL unique violation error code
+      if (error.code === '23505') {
         return res.status(400).json({ message: 'User with this email already exists.' });
       }
       console.error(error);
@@ -96,19 +103,33 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    const user = result.rows[0];
-    if (!user || user.password !== password) {
+    const { data, error } = await supabaseServiceRole
+      .from('users')
+      .select('id, email, full_name, password')
+      .eq('email', email)
+      .single();
+
+    if (error && error.code === 'PGRST116') {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
-    const token = 'supabase.jwt.token.string'; // Placeholder for JWT
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Internal server error.' });
+    }
+    
+    const isMatch = await bcrypt.compare(password, data.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials.' });
+    }
+
+    const token = 'supabase.jwt.token.string';
     res.status(200).json({
       message: 'Login successful.',
       token: token,
       user: {
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
+        id: data.id,
+        email: data.email,
+        full_name: data.full_name,
       },
     });
   } catch (err) {

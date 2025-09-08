@@ -62,22 +62,21 @@ app.get('/', (req, res) => {
 
 // We will add our API routes here in the next step.
 
-// ... other code ...
 // API Routes
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const jobsRoutes = require('./routes/jobs');
-const applicationsRoutes = require('./routes/applications'); // <-- Add this line
+const applicationsRoutes = require('./routes/applications');
 const messagesRoutes = require('./routes/messages');
-const miscRoutes = require('./routes/misc'); // Make sure this line exists
+const miscRoutes = require('./routes/misc');
 
-
+// Set up the routes with the correct, non-conflicting order
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/jobs', jobsRoutes);
-app.use('/api/applications', applicationsRoutes); // <-- Add this line
+app.use('/api/applications', applicationsRoutes);
 app.use('/api/jobs', messagesRoutes);
-app.use('/api', miscRoutes); // This will handle all endpoints under `/api/`
+app.use('/api', miscRoutes);
 
 // Start the server
 // ... rest of the file ...

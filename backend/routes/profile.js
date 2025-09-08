@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { supabaseServiceRole } = require('../supabase');
+const { supabaseServiceRole } = require("../supabase");
 
 /**
  * @swagger
@@ -119,67 +119,66 @@ const { supabaseServiceRole } = require('../supabase');
 
 // 🔒 Placeholder authentication middleware
 const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
   if (!token) return res.sendStatus(401);
 
   // Normally you'd verify JWT here, for now assume valid
-  req.user = { id: 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6' };
+  req.user = { id: "deee8a0d-8bee-4f78-a61a-40e1d55f8daa" };
   next();
 };
 
 // 📌 GET /api/profile
-router.get('/', authenticateToken, async (req, res) => {
+router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { data, error } = await supabaseServiceRole
-      .from('users')
-      .select('id, full_name, email, avatar_url, skills, location')
-      .eq('id', userId)
+      .from("users")
+      .select("id, full_name, email, avatar_url, skills, location")
+      .eq("id", userId)
       .single();
 
     if (error) {
       console.error(error);
-      return res.status(500).json({ message: 'Internal server error.' });
+      return res.status(500).json({ message: "Internal server error." });
     }
-    
+
     if (!data) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(404).json({ message: "User not found." });
     }
-    
+
     res.status(200).json(data);
   } catch (err) {
     console.error(err.stack);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({ message: "Internal server error." });
   }
 });
 
-
 // 📌 PUT /api/profile
-router.put('/', authenticateToken, async (req, res) => {
+router.put("/", authenticateToken, async (req, res) => {
   const { full_name, skills, location } = req.body;
   const userId = req.user.id;
   try {
     const { data, error } = await supabaseServiceRole
-      .from('users')
+      .from("users")
       .update({ full_name, skills, location })
-      .eq('id', userId)
-      .select('id, full_name, email, avatar_url, skills, location')
+      .eq("id", userId)
+      .select("id, full_name, email, avatar_url, skills, location")
       .single();
 
     if (error) {
       console.error(error);
-      return res.status(500).json({ message: 'Internal server error.' });
+      return res.status(500).json({ message: "Internal server error." });
     }
-    
+
     if (!data) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(404).json({ message: "User not found." });
     }
-    
+
     res.status(200).json(data);
   } catch (err) {
     console.error(err.stack);
-    res.status(500).json({ message: 'Internal server error.' });
+    res.status(500).json({ message: "Internal server error." });
   }
 });
 
