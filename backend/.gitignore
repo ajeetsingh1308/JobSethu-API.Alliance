@@ -36,4 +36,5 @@ tmp/
 temp/
 
 # Coverage reports (if using Jest, NYC, etc.)
-coverage/
+coverage/.env
+.env
