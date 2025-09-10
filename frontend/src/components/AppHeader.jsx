@@ -34,7 +34,7 @@ const AppHeader = () => {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden md:flex space-x-6">
+        <div className="hidden md:flex space-x-6 items-center">
           <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
           {isAuthenticated && (
             <>
@@ -44,10 +44,10 @@ const AppHeader = () => {
           )}
         </div>
 
-        {/* Auth and Action Buttons */}
-        <div className="flex items-center space-x-4">
+        {/* Auth and Action Buttons for Desktop */}
+        <div className="hidden md:flex items-center space-x-4">
           {isAuthenticated && (
-            <Link to="/jobs/new" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-colors hidden md:block">
+            <Link to="/jobs/new" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-full shadow-md transition-colors">
               Post a Job
             </Link>
           )}

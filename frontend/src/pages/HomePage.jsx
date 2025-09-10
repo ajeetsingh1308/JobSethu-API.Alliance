@@ -7,44 +7,45 @@ import JobCard from '../components/JobCard';
 
 const HomePage = () => {
   const [jobs, setJobs] = useState([]);
+  const [categories, setCategories] = useState(["All"]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchJobs = async () => {
+    const fetchJobsAndCategories = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const response = await fetch('http://localhost:3000/api/jobs');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        setJobs(data.jobs); // The API response has a 'jobs' array
+        setJobs(data.jobs);
+
+        // Extract unique categories from the fetched jobs
+        const allCategories = data.jobs.map(job => job.category).filter(Boolean);
+        const uniqueCategories = ["All", ...new Set(allCategories)];
+        setCategories(uniqueCategories);
+        
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-    fetchJobs();
+    fetchJobsAndCategories();
   }, []);
 
   const handleCardClick = (jobId) => {
     navigate(`/jobs/${jobId}`);
   };
-  
-  // A mock job object to display something while fetching
-  const mockJob = {
-    id: "j1a2b3c4-...",
-    title: "Need help with garden weeding",
-    description: "Looking for someone to help clear out weeds from my vegetable patch. This is a short-term gig for a few hours. No prior experience is needed, just a willingness to work outdoors.",
-    location: "Vasco, Goa",
-    amount: "500",
-    skills_required: ["Gardening", "Manual Labor", "Outdoors"],
-    image_url: "https://images.unsplash.com/photo-1549419149-1d48c8b6d859?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    posted_days_ago: "3 days ago",
-    status: "open",
-  };
+
+  const filteredJobs = selectedCategory === "All"
+    ? jobs
+    : jobs.filter(job => job.category === selectedCategory);
 
   if (loading) return <div className="text-center py-10">Loading jobs...</div>;
   if (error) return <div className="text-center py-10 text-red-500">Error: {error}</div>;
@@ -72,20 +73,30 @@ const HomePage = () => {
             </button>
           </div>
         </section>
+        
+        {/* Job Categories Filter */}
+        <section className="py-6">
+          <div className="flex flex-wrap justify-center gap-4">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-full font-semibold transition-colors
+                  ${selectedCategory === category ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </section>
 
         {/* Recent Jobs Section */}
         <section className="py-10">
           <h2 className="text-3xl font-bold text-white mb-6">Recent Jobs</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Displaying mock data for now, replace with API data later */}
-            <JobCard job={mockJob} onClick={handleCardClick} />
-            <JobCard job={mockJob} onClick={handleCardClick} />
-            <JobCard job={mockJob} onClick={handleCardClick} />
-            {/* Render fetched jobs when the API is live
-            {jobs.map((job) => (
+            {filteredJobs.map((job) => (
               <JobCard key={job.id} job={job} onClick={handleCardClick} />
             ))}
-            */}
           </div>
         </section>
       </main>

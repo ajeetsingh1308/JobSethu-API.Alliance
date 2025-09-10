@@ -1,6 +1,8 @@
+
 const express = require('express');
 const router = express.Router();
 const { supabaseServiceRole } = require('../supabase');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 // Placeholder middleware for authentication
@@ -11,6 +13,11 @@ const authenticateToken = (req, res, next) => {
   req.user = { id: 'deee8a0d-8bee-4f78-a61a-40e1d55f8daa' };
   next();
 };
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+// Corrected to a more generic, and often available, model name
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flas" });
+
 
 /**
  * @swagger
@@ -64,10 +71,9 @@ const authenticateToken = (req, res, next) => {
 router.post('/jobs/:id/create-order', authenticateToken, async (req, res) => {
   try {
     const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
-    const amount = 200000; // Example amount from job details
-
+    const amount = 200000;
     res.status(200).json({
-      order_id: 'order_K8yq8X5J2v6Z8Y', // Dummy ID
+      order_id: 'order_K8yq8X5J2v6Z8Y',
       razorpay_key_id: razorpayKeyId,
       amount: amount,
       currency: 'INR',
@@ -100,6 +106,7 @@ router.post('/payment/webhook', (req, res) => {
   console.log('Received a Razorpay webhook.');
   res.status(200).json({ status: 'received' });
 });
+
 
 /**
  * @swagger
@@ -156,11 +163,34 @@ router.post('/jobs/:id/release-funds', authenticateToken, (req, res) => {
  *       500:
  *         description: Internal server error.
  */
-router.post('/ai/suggest-job-details', (req, res) => {
-  res.status(200).json({
-    description: 'Seeking a reliable individual to assist with moving boxes from an apartment to a new location. Must be able to lift heavy objects and be punctual.',
-    skills: ['Manual Labor', 'Punctuality', 'Physical Fitness'],
-  });
+
+// Generate job details using Gemini
+router.post('/ai/suggest-job-details', async (req, res) => {
+  const { title } = req.body;
+  if (!title) {
+    return res.status(400).json({ message: 'Title is required.' });
+  }
+
+  try {
+    const prompt = `Based on the job title "${title}", generate a detailed job description and a list of 3-5 key skills. The response should be a JSON object with two keys: "description" (string) and "skills" (an array of strings). Do not include any other text or formatting outside of the JSON object. Example: { "description": "...", "skills": ["skill1", "skill2"] }`;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const jsonString = response.text().replace(/```json|```/g, '').trim();
+
+    // Safely parse JSON and handle errors
+    let jobDetails;
+    try {
+      jobDetails = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response as JSON:', jsonString);
+      return res.status(500).json({ message: 'AI response was not in the correct format. Please try again.' });
+    }
+
+    res.status(200).json(jobDetails);
+  } catch (err) {
+    console.error('Error with Gemini API:', err);
+    res.status(500).json({ message: 'Failed to generate job details with AI.' });
+  }
 });
 
 
@@ -187,10 +217,22 @@ router.post('/ai/suggest-job-details', (req, res) => {
  *       500:
  *         description: Internal server error.
  */
+
+// Generate job image using Gemini
 router.post('/ai/generate-job-image', (req, res) => {
-  res.status(200).json({
-    image_url: 'https://example.com/generated-images/new-image.png',
-  });
+  const { prompt } = req.body;
+  // Note: Gemini-pro does not generate images. You would need to use another model or service.
+  // For now, we'll return a dynamic mock URL based on the prompt for a better user experience.
+  let imageUrl;
+  if (prompt.toLowerCase().includes('gardening')) {
+    imageUrl = 'https://images.unsplash.com/photo-1549419149-1d48c8b6d859?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
+  } else if (prompt.toLowerCase().includes('tutor')) {
+    imageUrl = 'https://images.unsplash.com/photo-1593816668700-1c3132e02d08?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
+  } else {
+    imageUrl = 'https://images.unsplash.com/photo-1605379399642-870262d3d051?q=80&w=2715&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
+  }
+  
+  res.status(200).json({ image_url: imageUrl });
 });
 
 /**
@@ -227,6 +269,7 @@ router.post('/ai/generate-job-image', (req, res) => {
  *         description: Internal server error.
  */
 router.post('/ai/suggest-reply', (req, res) => {
+  // This is a simple mock as a full chat-based AI is more complex
   res.status(200).json({
     suggestions: [
       'Yes, it is! Are you available this week?',

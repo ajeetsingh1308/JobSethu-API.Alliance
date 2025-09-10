@@ -167,19 +167,29 @@ const authenticateToken = (req, res, next) => {
 router.get('/', async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  const category = req.query.category;
   const offset = (page - 1) * limit;
 
   try {
-    const { data: jobsData, error: jobsError } = await supabaseServiceRole
+    let query = supabaseServiceRole
       .from('jobs')
       .select(`
         id,
         title,
         amount,
+        skills_required,
+        description,
+        category,
         poster_id,
         poster:poster_id (full_name)
       `)
-      .eq('status', 'open')
+      .eq('status', 'open');
+      
+    if (category && category !== 'All') {
+      query = query.contains('skills_required', [category]);
+    }
+
+    const { data: jobsData, error: jobsError } = await query
       .range(offset, offset + limit - 1);
 
     if (jobsError) {
@@ -191,6 +201,9 @@ router.get('/', async (req, res) => {
       id: job.id,
       title: job.title,
       amount: job.amount,
+      skills_required: job.skills_required,
+      description: job.description,
+      category: job.category,
       poster: { full_name: job.poster.full_name },
     }));
 
@@ -225,12 +238,12 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/jobs
 router.post('/', authenticateToken, async (req, res) => {
-  const { title, description, amount, skills_required } = req.body;
+  const { title, description, amount, skills_required, category } = req.body;
   const posterId = req.user.id;
   try {
     const { data, error } = await supabaseServiceRole
       .from('jobs')
-      .insert({ poster_id: posterId, title, description, amount, skills_required, status: 'open' })
+      .insert({ poster_id: posterId, title, description, amount, skills_required, category, status: 'open' })
       .select('*')
       .single();
 
