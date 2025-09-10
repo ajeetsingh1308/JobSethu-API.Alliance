@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import { Sparkles, ImageDown, SendHorizonal, AlertTriangle, CloudUpload } from 'lucide-react';
 
+// A hardcoded list of categories for the dropdown menu
+const jobCategories = ["IT", "Manual Labor", "Creative", "Tutoring", "Admin"];
+
 const CreateJobPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -13,15 +16,15 @@ const CreateJobPage = () => {
     skills_required: '',
     amount: '',
     location: '',
+    category: '', // Added a category field
     isUrgent: false,
-    image_url: '' // For AI-generated or uploaded image
+    image_url: ''
   });
 
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Auth check: Redirect to login if no token is found
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -51,6 +54,12 @@ const CreateJobPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: formData.title }),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to get AI suggestions.');
+      }
+      
       const data = await response.json();
       setFormData((prevData) => ({
         ...prevData,
@@ -58,7 +67,7 @@ const CreateJobPage = () => {
         skills_required: data.skills.join(', '),
       }));
     } catch (err) {
-      setError('Failed to get AI suggestions.');
+      setError(err.message);
     } finally {
       setAiLoading(false);
     }
@@ -91,7 +100,6 @@ const CreateJobPage = () => {
   };
 
   const handleFileChange = (e) => {
-    // In a real app, you would handle file uploads to Supabase Storage here
     console.log('File selected:', e.target.files[0]);
   };
 
@@ -106,7 +114,6 @@ const CreateJobPage = () => {
       return;
     }
     
-    // Prepare data for API call
     const jobData = {
       ...formData,
       skills_required: formData.skills_required.split(',').map(s => s.trim()),
@@ -118,7 +125,7 @@ const CreateJobPage = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Pass the JWT token for authentication
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(jobData),
       });
@@ -130,7 +137,7 @@ const CreateJobPage = () => {
       
       const newJob = await response.json();
       alert('Job posted successfully!');
-      navigate(`/jobs/${newJob.id}`); // Redirect to the new job page
+      navigate(`/jobs/${newJob.id}`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -206,6 +213,24 @@ const CreateJobPage = () => {
               required
             />
             <p className="mt-2 text-sm text-gray-500">Enter skills separated by commas.</p>
+          </div>
+          
+          {/* Category Dropdown */}
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-400 mb-2">Category</label>
+            <select
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500"
+              required
+            >
+              <option value="" disabled>Select a category</option>
+              {jobCategories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
           </div>
 
           {/* Job Image */}
