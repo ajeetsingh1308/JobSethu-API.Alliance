@@ -1,6 +1,6 @@
 // src/components/JobCard.jsx
 
-import { MapPin, IndianRupee, Clock } from 'lucide-react';
+import { MapPin, IndianRupee, Clock } from "lucide-react";
 
 const JobCard = ({ job, onClick }) => {
   const { id, title, description, location, amount, skills_required, image_url, posted_days_ago, status } = job;
@@ -37,7 +37,8 @@ const JobCard = ({ job, onClick }) => {
           </div>
           <p className="text-sm text-gray-400 mb-4 line-clamp-3">{description}</p>
           <div className="flex flex-wrap gap-2 mb-4">
-            {skills_required.map((skill, index) => (
+            {/* Add a conditional check here */}
+            {skills_required && skills_required.map((skill, index) => (
               <span
                 key={index}
                 className="bg-blue-600 text-xs font-medium px-2 py-1 rounded-full text-white"
