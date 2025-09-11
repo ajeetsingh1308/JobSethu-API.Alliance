@@ -44,7 +44,7 @@ const AuthPages = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         setMessage('Login successful!');
-        navigate('/dashboard'); // Redirect to dashboard
+        navigate('/'); // <-- CHANGE THIS LINE
       } else {
         setMessage('Account created successfully! You can now log in.');
         navigate('/login'); // Redirect to login page
@@ -55,7 +55,7 @@ const AuthPages = () => {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="min-h-screen bg-gray-900 text-gray-200">
       <AppHeader />

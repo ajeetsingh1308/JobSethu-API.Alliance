@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { supabaseServiceRole } = require('../supabase');
+const authenticateToken = require('../middleware/auth'); // The one, correct declaration
 
 /**
  * @swagger
@@ -9,16 +10,7 @@ const { supabaseServiceRole } = require('../supabase');
  *   description: Endpoints for creating, viewing, and managing job postings.
  */
 
-// Placeholder middleware for authentication
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.sendStatus(401);
-
-  // In real code verify JWT here
-  req.user = { id: 'deee8a0d-8bee-4f78-a61a-40e1d55f8daa' };
-  next();
-};
+// NOTE: The old, multi-line authenticateToken function that was here is now DELETED.
 
 /**
  * @swagger
@@ -42,31 +34,6 @@ const authenticateToken = (req, res, next) => {
  *     responses:
  *       200:
  *         description: A list of jobs.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 jobs:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       title:
- *                         type: string
- *                       amount:
- *                         type: integer
- *                       poster:
- *                         type: object
- *                         properties:
- *                           full_name:
- *                             type: string
- *                 page:
- *                   type: integer
- *                 has_more:
- *                   type: boolean
  *   post:
  *     summary: Creates a new job posting.
  *     tags: [Job Management]
@@ -93,10 +60,6 @@ const authenticateToken = (req, res, next) => {
  *     responses:
  *       201:
  *         description: Job created successfully.
- *       401:
- *         description: Unauthorized.
- *       500:
- *         description: Internal server error.
  *
  * /jobs/{id}:
  *   get:
@@ -112,53 +75,6 @@ const authenticateToken = (req, res, next) => {
  *     responses:
  *       200:
  *         description: Job details retrieved successfully.
- *       404:
- *         description: Job not found.
- *   put:
- *     summary: Updates the details of an existing job.
- *     tags: [Job Management]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               description:
- *                 type: string
- *               amount:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Job updated successfully.
- *       401:
- *         description: Unauthorized.
- *       404:
- *         description: Job not found.
- *   delete:
- *     summary: Deletes a job posting.
- *     tags: [Job Management]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       204:
- *         description: Job deleted successfully.
- *       401:
- *         description: Unauthorized.
  *       404:
  *         description: Job not found.
  */
@@ -253,96 +169,6 @@ router.post('/', authenticateToken, async (req, res) => {
     }
     
     res.status(201).json(data);
-  } catch (err) {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Internal server error.' });
-  }
-});
-
-// ========== UPDATE APPLICATION STATUS ==========
-router.put('/:id', authenticateToken, async (req, res) => {
-  const applicationId = req.params.id;
-  const { status } = req.body;
-  const userId = req.user.id;
-  
-  if (!['accepted', 'rejected'].includes(status)) {
-    return res.status(400).json({ message: 'Status must be either accepted or rejected.' });
-  }
-
-  try {
-    const { data: application, error: appError } = await supabaseServiceRole
-      .from('applications')
-      .select('job_id')
-      .eq('id', applicationId)
-      .single();
-
-    if (appError) {
-      return res.status(404).json({ message: 'Application not found.' });
-    }
-    
-    const { data: job, error: jobError } = await supabaseServiceRole
-      .from('jobs')
-      .select('poster_id')
-      .eq('id', application.job_id)
-      .single();
-    
-    if (jobError) {
-      return res.status(404).json({ message: 'Associated job not found.' });
-    }
-
-    if (job.poster_id !== userId) {
-      return res.status(401).json({ message: 'Unauthorized. You are not the job poster.' });
-    }
-
-    const { data: updatedApp, error: updateError } = await supabaseServiceRole
-      .from('applications')
-      .update({ status })
-      .eq('id', applicationId)
-      .select('id, job_id, applicant_id, status')
-      .single();
-    
-    if (updateError) {
-      console.error(updateError);
-      return res.status(500).json({ message: 'Internal server error.' });
-    }
-    
-    res.status(200).json(updatedApp);
-  } catch (err) {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Internal server error.' });
-  }
-});
-
-
-// ========== WITHDRAW APPLICATION ==========
-router.delete('/:id', authenticateToken, async (req, res) => {
-  const applicationId = req.params.id;
-  const userId = req.user.id;
-  try {
-    const { data: application, error: appError } = await supabaseServiceRole
-      .from('applications')
-      .select('applicant_id')
-      .eq('id', applicationId)
-      .single();
-
-    if (appError) {
-      return res.status(404).json({ message: 'Application not found.' });
-    }
-    if (application.applicant_id !== userId) {
-      return res.status(401).json({ message: 'Unauthorized. You can only withdraw your own application.' });
-    }
-    
-    const { error: deleteError } = await supabaseServiceRole
-      .from('applications')
-      .delete()
-      .eq('id', applicationId);
-
-    if (deleteError) {
-      console.error(deleteError);
-      return res.status(500).json({ message: 'Internal server error.' });
-    }
-    
-    res.sendStatus(204);
   } catch (err) {
     console.error(err.stack);
     res.status(500).json({ message: 'Internal server error.' });

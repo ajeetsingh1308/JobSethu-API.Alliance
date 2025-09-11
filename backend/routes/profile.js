@@ -1,55 +1,34 @@
 const express = require("express");
 const router = express.Router();
 const { supabaseServiceRole } = require("../supabase");
+const authenticateToken = require('../middleware/auth'); // Use the correct middleware
+
+/**
+ * @swagger
+ * tags:
+ *   name: Authentication & User Profile
+ *   description: Endpoints for managing user authentication and profile
+ */
 
 /**
  * @swagger
  * /profile:
  *   get:
- *     summary: Retrieves the profile data for the currently authenticated user.
+ *     summary: Retrieves the profile data for the currently authenticated user
  *     tags: [Authentication & User Profile]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User profile retrieved successfully.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: string
- *                   example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
- *                 full_name:
- *                   type: string
- *                   example: Rohan Patel
- *                 email:
- *                   type: string
- *                   example: rohan.patel@example.com
- *                 avatar_url:
- *                   type: string
- *                   example: https://example.com/avatars/rohan.png
- *                 skills:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["Event Support", "Driving"]
- *                 location:
- *                   type: object
- *                   properties:
- *                     lat:
- *                       type: number
- *                       example: 15.2993
- *                     lon:
- *                       type: number
- *                       example: 74.1240
+ *         description: User profile retrieved successfully
  *       401:
- *         description: Unauthorized. Invalid or missing token.
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
  *       500:
- *         description: Internal server error.
+ *         description: Internal server error
  *   put:
- *     summary: Updates the authenticated user's profile.
+ *     summary: Updates the authenticated user's profile
  *     tags: [Authentication & User Profile]
  *     security:
  *       - bearerAuth: []
@@ -62,90 +41,37 @@ const { supabaseServiceRole } = require("../supabase");
  *             properties:
  *               full_name:
  *                 type: string
- *                 example: Rohan P.
  *               skills:
  *                 type: array
  *                 items:
  *                   type: string
- *                 example: ["Event Support", "Driving", "Photography"]
  *               location:
- *                 type: object
- *                 properties:
- *                   lat:
- *                     type: number
- *                     example: 15.3000
- *                   lon:
- *                     type: number
- *                     example: 74.1250
+ *                 type: string
+ *               about:
+ *                 type: string
  *     responses:
  *       200:
- *         description: Profile updated successfully.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: string
- *                   example: a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6
- *                 full_name:
- *                   type: string
- *                   example: Rohan P.
- *                 email:
- *                   type: string
- *                   example: rohan.patel@example.com
- *                 avatar_url:
- *                   type: string
- *                   example: https://example.com/avatars/rohan.png
- *                 skills:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["Event Support", "Driving", "Photography"]
- *                 location:
- *                   type: object
- *                   properties:
- *                     lat:
- *                       type: number
- *                       example: 15.3000
- *                     lon:
- *                       type: number
- *                       example: 74.1250
+ *         description: Profile updated successfully
  *       401:
- *         description: Unauthorized. Invalid or missing token.
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
  *       500:
- *         description: Internal server error.
+ *         description: Internal server error
  */
 
-// 🔒 Placeholder authentication middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.sendStatus(401);
-
-  // Normally you'd verify JWT here, for now assume valid
-  req.user = { id: "deee8a0d-8bee-4f78-a61a-40e1d55f8daa" };
-  next();
-};
-
-// 📌 GET /api/profile
+// GET /api/profile
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { data, error } = await supabaseServiceRole
       .from("users")
-      .select("id, full_name, email, avatar_url, skills, location")
+      .select("id, full_name, email, avatar_url, skills, location, about")
       .eq("id", userId)
       .single();
 
-    if (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Internal server error." });
-    }
-
-    if (!data) {
-      return res.status(404).json({ message: "User not found." });
-    }
+    if (error) throw error;
+    if (!data) return res.status(404).json({ message: "User not found." });
 
     res.status(200).json(data);
   } catch (err) {
@@ -154,26 +80,20 @@ router.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-// 📌 PUT /api/profile
+// PUT /api/profile
 router.put("/", authenticateToken, async (req, res) => {
-  const { full_name, skills, location } = req.body;
+  const { full_name, skills, location, about } = req.body;
   const userId = req.user.id;
   try {
     const { data, error } = await supabaseServiceRole
       .from("users")
-      .update({ full_name, skills, location })
+      .update({ full_name, skills, location, about })
       .eq("id", userId)
-      .select("id, full_name, email, avatar_url, skills, location")
+      .select("id, full_name, email, avatar_url, skills, location, about")
       .single();
 
-    if (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Internal server error." });
-    }
-
-    if (!data) {
-      return res.status(404).json({ message: "User not found." });
-    }
+    if (error) throw error;
+    if (!data) return res.status(404).json({ message: "User not found." });
 
     res.status(200).json(data);
   } catch (err) {

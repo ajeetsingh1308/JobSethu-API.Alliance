@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { supabaseServiceRole } = require('../supabase');
+const authenticateToken = require('../middleware/auth'); // Import the middleware
+
 
 /**
  * @swagger
@@ -8,18 +10,6 @@ const { supabaseServiceRole } = require('../supabase');
  *   - name: Chat & Messaging
  *     description: Real-time chat history and messaging for jobs.
  */
-
-// Placeholder middleware for authentication
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.sendStatus(401);
-
-  req.user = { id: 'deee8a0d-8bee-4f78-a61a-40e1d55f8daa' };
-  next();
-};
-
-
 
 /**
  * @swagger

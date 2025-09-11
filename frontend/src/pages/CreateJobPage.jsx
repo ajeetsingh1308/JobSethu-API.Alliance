@@ -1,11 +1,8 @@
-// src/pages/CreateJobPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import { Sparkles, ImageDown, SendHorizonal, AlertTriangle, CloudUpload } from 'lucide-react';
+import { Sparkles, ImageDown, SendHorizonal, AlertTriangle, CloudUpload, LoaderCircle } from 'lucide-react';
 
-// A hardcoded list of categories for the dropdown menu
 const jobCategories = ["IT", "Manual Labor", "Creative", "Tutoring", "Admin"];
 
 const CreateJobPage = () => {
@@ -16,13 +13,14 @@ const CreateJobPage = () => {
     skills_required: '',
     amount: '',
     location: '',
-    category: '', // Added a category field
+    category: '',
     isUrgent: false,
     image_url: ''
   });
 
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -40,6 +38,54 @@ const CreateJobPage = () => {
     }));
   };
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // --- VALIDATION LOGIC BASED ON YOUR BUCKET POLICY ---
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+    const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
+
+    if (file.size > MAX_FILE_SIZE) {
+      setError('File is too large. The maximum size is 2 MB.');
+      return;
+    }
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      setError('Invalid file type. Please upload a JPEG, PNG, or HEIC image.');
+      return;
+    }
+    // --- END OF VALIDATION LOGIC ---
+
+    setUploading(true);
+    setError(null);
+    const token = localStorage.getItem('token');
+    const uploadFormData = new FormData();
+    uploadFormData.append('image', file);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Image upload failed. Please try again.');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, image_url: data.image_url }));
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+  
   const handleAiSuggest = async () => {
     if (!formData.title) {
       setError("Please enter a job title first.");
@@ -47,11 +93,15 @@ const CreateJobPage = () => {
     }
     setAiLoading(true);
     setError(null);
+    const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch('http://localhost:3000/api/ai/suggest-job-details', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/ai/suggest-job-details`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ title: formData.title }),
       });
       
@@ -63,8 +113,8 @@ const CreateJobPage = () => {
       const data = await response.json();
       setFormData((prevData) => ({
         ...prevData,
-        description: data.description,
-        skills_required: data.skills.join(', '),
+        description: data.description || '',
+        skills_required: data.skills ? data.skills.join(', ') : '',
       }));
     } catch (err) {
       setError(err.message);
@@ -80,11 +130,15 @@ const CreateJobPage = () => {
     }
     setAiLoading(true);
     setError(null);
+    const token = localStorage.getItem('token');
     
     try {
-      const response = await fetch('http://localhost:3000/api/ai/generate-job-image', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/ai/generate-job-image`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ prompt: formData.title }),
       });
       const data = await response.json();
@@ -97,10 +151,6 @@ const CreateJobPage = () => {
     } finally {
       setAiLoading(false);
     }
-  };
-
-  const handleFileChange = (e) => {
-    console.log('File selected:', e.target.files[0]);
   };
 
   const handleSubmit = async (e) => {
@@ -116,12 +166,12 @@ const CreateJobPage = () => {
     
     const jobData = {
       ...formData,
-      skills_required: formData.skills_required.split(',').map(s => s.trim()),
+      skills_required: formData.skills_required.split(',').map(s => s.trim()).filter(s => s),
       amount: parseInt(formData.amount, 10),
     };
     
     try {
-      const response = await fetch('http://localhost:3000/api/jobs', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/jobs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,6 +207,39 @@ const CreateJobPage = () => {
         </p>
 
         <form onSubmit={handleSubmit} className="bg-gray-800 rounded-xl shadow-lg p-6 space-y-6">
+          {/* Job Image */}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Job Image (Max 2MB)</label>
+            <div className="flex items-center space-x-4">
+              <button
+                type="button"
+                onClick={handleAiImage}
+                disabled={aiLoading || uploading}
+                className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ImageDown size={16} />
+                <span>Generate with AI</span>
+              </button>
+              <label htmlFor="image-upload" className={`flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-3 rounded-lg transition-colors cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                {uploading ? <LoaderCircle size={16} className="animate-spin" /> : <CloudUpload size={16} />}
+                <span>{uploading ? 'Uploading...' : 'Upload your own'}</span>
+                <input
+                  id="image-upload"
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept="image/png, image/jpeg, image/heic"
+                  disabled={uploading}
+                />
+              </label>
+            </div>
+            {formData.image_url && (
+              <div className="mt-4">
+                <img src={formData.image_url} alt="Job preview" className="w-full h-48 object-cover rounded-lg" />
+              </div>
+            )}
+          </div>
+
           {/* Job Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-400 mb-2">Job Title</label>
@@ -180,11 +263,11 @@ const CreateJobPage = () => {
               <button
                 type="button"
                 onClick={handleAiSuggest}
-                disabled={aiLoading}
-                className="flex items-center text-blue-400 hover:text-blue-300 transition-colors disabled:text-gray-500 disabled:cursor-not-allowed"
+                disabled={aiLoading || uploading}
+                className="flex items-center text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Sparkles size={16} className="mr-2" />
-                {aiLoading ? 'Generating...' : 'Generate with AI'}
+                {aiLoading ? 'Generating...' : 'Generating...'}
               </button>
             </div>
             <textarea
@@ -232,37 +315,6 @@ const CreateJobPage = () => {
               ))}
             </select>
           </div>
-
-          {/* Job Image */}
-          <div>
-            <label htmlFor="job-image" className="block text-sm font-medium text-gray-400 mb-2">Job Image</label>
-            <div className="flex items-center space-x-4">
-              <button
-                type="button"
-                onClick={handleAiImage}
-                disabled={aiLoading}
-                className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-3 rounded-lg transition-colors disabled:text-gray-500 disabled:cursor-not-allowed"
-              >
-                <ImageDown size={16} />
-                <span>Generate with AI</span>
-              </button>
-              <label htmlFor="image-upload" className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-3 rounded-lg transition-colors cursor-pointer">
-                <CloudUpload size={16} />
-                <span>Upload your own</span>
-                <input
-                  id="image-upload"
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </label>
-            </div>
-          </div>
-          {formData.image_url && (
-            <div className="mt-4">
-              <img src={formData.image_url} alt="AI generated job" className="w-full h-48 object-cover rounded-lg" />
-            </div>
-          )}
 
           {/* Payment & Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -323,7 +375,7 @@ const CreateJobPage = () => {
           <button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center space-x-2"
-            disabled={loading}
+            disabled={loading || uploading || aiLoading}
           >
             {loading ? (
               'Posting Job...'
