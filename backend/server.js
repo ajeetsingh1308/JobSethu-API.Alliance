@@ -69,13 +69,15 @@ const jobsRoutes = require('./routes/jobs');
 const applicationsRoutes = require('./routes/applications');
 const messagesRoutes = require('./routes/messages');
 const miscRoutes = require('./routes/misc');
+const dashboardRoutes = require('./routes/dashboard'); // Import the new dashboard routes
 
 // Set up the routes with the correct, non-conflicting order
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/applications', applicationsRoutes);
-app.use('/api/jobs', messagesRoutes);
+app.use('/api/jobs', messagesRoutes); // Note: This might cause conflicts, consider moving message routes
+app.use('/api/dashboard', dashboardRoutes); // Add the dashboard routes
 app.use('/api', miscRoutes);
 
 // Start the server

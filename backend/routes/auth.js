@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { supabaseServiceRole } = require('../supabase');
-const bcrypt = require('bcrypt'); // Import the bcrypt library
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken
+require('dotenv').config();
 
 /**
  * @swagger
@@ -109,12 +111,8 @@ router.post('/login', async (req, res) => {
       .eq('email', email)
       .single();
 
-    if (error && error.code === 'PGRST116') {
+    if (error || !data) {
       return res.status(401).json({ message: 'Invalid credentials.' });
-    }
-    if (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Internal server error.' });
     }
     
     const isMatch = await bcrypt.compare(password, data.password);
@@ -122,7 +120,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
-    const token = 'supabase.jwt.token.string';
+    // Create a JWT with the user's ID
+    const token = jwt.sign({ id: data.id }, process.env.SUPABASE_JWT_SECRET, { expiresIn: '1h' });
+
     res.status(200).json({
       message: 'Login successful.',
       token: token,

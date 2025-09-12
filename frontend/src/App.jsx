@@ -10,16 +10,14 @@ import ProfilePage from './pages/ProfilePage';
 import PaymentPage from './pages/PaymentPage';
 import MessagesPage from './pages/MessagesPage';
 import BottomNavBar from './components/BottomNavBar';
-
-// Placeholder components for the pages we will build next
-const OnboardingPage = () => <div>Onboarding Page</div>;
+import Footer from './components/Footer'; // Import the new Footer component
 
 function App() {
   return (
     <Router>
-      {/* Use a simple container for the whole app and add a wrapper for responsiveness */}
-      <div className="relative min-h-screen">
-        <div className="md:pb-0 pb-16">
+      <div className="relative min-h-screen flex flex-col">
+        {/* Main content area */}
+        <div className="flex-grow md:pb-0 pb-16">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/jobs/:id" element={<JobDetailsPage />} />
@@ -30,10 +28,12 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/login" element={<AuthPages />} />
             <Route path="/signup" element={<AuthPages />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
           </Routes>
         </div>
+        
+        {/* Bottom Nav for mobile and Footer for all screens */}
         <BottomNavBar />
+        <Footer />
       </div>
     </Router>
   );
