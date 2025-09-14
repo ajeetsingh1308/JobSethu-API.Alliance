@@ -209,6 +209,60 @@ router.post('/upload', authenticateToken, upload.single('image'), async (req, re
     }
 });
 
+/**
+ * @swagger
+ * /upload/avatar:
+ *   post:
+ *     summary: Uploads a user avatar image.
+ *     tags: [Payment & AI Features]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded successfully.
+ */
+router.post('/upload/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded.' });
+    }
+
+    try {
+        const file = req.file;
+        // Use user ID for filename to ensure uniqueness and prevent conflicts
+        const fileName = `${req.user.id}-${Date.now()}`;
+
+        // Upload file to the 'avatars' bucket
+        const { error: uploadError } = await supabaseServiceRole.storage
+            .from('avatars')
+            .upload(fileName, file.buffer, {
+                contentType: file.mimetype,
+                upsert: true, // Overwrite existing file for the user if they upload a new one
+            });
+
+        if (uploadError) throw uploadError;
+
+        // Get the public URL
+        const { data } = supabaseServiceRole.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+
+        res.status(200).json({ avatar_url: data.publicUrl });
+
+    } catch (err) {
+        console.error('Error uploading avatar to Supabase:', err);
+        res.status(500).json({ message: 'Failed to upload avatar.' });
+    }
+});
 
 
 // ========== AI FEATURES (Genkit & Gemini) ==========
@@ -354,6 +408,59 @@ router.post('/ai/suggest-reply', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Error with Gemini API for suggestions:', err);
     res.status(500).json({ message: 'Failed to generate suggestions.' });
+  }
+});
+
+/**
+ * @swagger
+ * /ai/generate-about:
+ *   post:
+ *     summary: Generates a user profile "About Me" section based on skills.
+ *     tags: [Payment & AI Features]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [skills]
+ *             properties:
+ *               skills:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["Graphic Design", "React", "Teamwork"]
+ *     responses:
+ *       200:
+ *         description: AI-generated "About Me" text returned.
+ */
+router.post('/ai/generate-about', authenticateToken, async (req, res) => {
+  const { skills } = req.body;
+
+  if (!skills || skills.length === 0) {
+    return res.status(400).json({ message: 'A list of skills is required to generate an about section.' });
+  }
+
+  try {
+    const prompt = `
+      Based on the following skills: ${skills.join(', ')}.
+      Write a friendly, first-person "About Me" paragraph for a job-finding profile. It should be 2-3 sentences long.
+      The response must be a valid JSON object with a single key "about" which contains the generated text as a string.
+      Example: { "about": "I am a skilled professional..." }
+    `;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const jsonString = response.text().replace(/```json|```/g, '').trim();
+    
+    const aboutSection = JSON.parse(jsonString);
+    res.status(200).json(aboutSection);
+
+  } catch (err) {
+    console.error('Error with Gemini API for about section:', err);
+    res.status(500).json({ message: 'Failed to generate about section.' });
   }
 });
 
