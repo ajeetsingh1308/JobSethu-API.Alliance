@@ -17,76 +17,54 @@ const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
     info: {
-      title: 'My Project API',
-      description: 'API documentation for the job-finding platform.',
+      title: 'Job Sethu API',
+      description: 'API documentation for the Job Sethu platform.',
       version: '1.0.0',
-      contact: {
-        name: 'Coding Partner',
-        email: 'help@codingpartner.com',
-      },
     },
-    servers: [
-      {
-        url: `http://localhost:${port}/api`,
-        description: 'Local development server',
-      },
-    ],
+    servers: [{ url: `http://localhost:${port}/api` }],
     components: {
       securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'JWT token for authentication',
-        },
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       },
     },
-    security: [{
-      bearerAuth: [],
-    }],
+    security: [{ bearerAuth: [] }],
   },
-  // Here, we specify the files where JSDoc comments for API definitions are located.
-  // We will create these files in the next steps.
   apis: ['./routes/*.js'],
 };
-
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-
-// Serve Swagger UI documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Define a simple root route for testing
-app.get('/', (req, res) => {
-  res.send('Welcome to the backend API!');
-});
+// --- Corrected API Routing ---
 
-// We will add our API routes here in the next step.
-
-// API Routes
+// Import all route files
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const jobsRoutes = require('./routes/jobs');
 const applicationsRoutes = require('./routes/applications');
 const messagesRoutes = require('./routes/messages');
 const miscRoutes = require('./routes/misc');
-const dashboardRoutes = require('./routes/dashboard'); // Import the new dashboard routes
+const dashboardRoutes = require('./routes/dashboard');
 
-// Set up the routes with the correct, non-conflicting order
+// Mount routers with a clear and non-conflicting structure
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/jobs', jobsRoutes);
-app.use('/api/applications', applicationsRoutes);
-app.use('/api/jobs', messagesRoutes); // Note: This might cause conflicts, consider moving message routes
-app.use('/api/dashboard', dashboardRoutes); // Add the dashboard routes
+app.use('/api/dashboard', dashboardRoutes);
+
+// All routes that start with /api/jobs/...
+app.use('/api/jobs', jobsRoutes); 
+app.use('/api/jobs', messagesRoutes); // Now correctly handled under /api/jobs
+app.use('/api/jobs', applicationsRoutes); // Now correctly handled under /api/jobs
+
+// Miscellaneous routes like upload and AI helpers
 app.use('/api', miscRoutes);
 
-// Start the server
-// ... rest of the file ...
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the Job Sethu backend API!');
+});
 
 // Start the server
 app.listen(port, () => {
   console.log(`✅ Server is running on http://localhost:${port}`);
   console.log(`📖 API Documentation available at http://localhost:${port}/api-docs`);
 });
-
-

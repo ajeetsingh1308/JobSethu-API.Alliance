@@ -1,7 +1,8 @@
 const express = require('express');
-const router = express.Router();
+// Add { mergeParams: true } to the router initialization
+const router = express.Router({ mergeParams: true }); 
 const { supabaseServiceRole } = require('../supabase');
-const authenticateToken = require('../middleware/auth'); // Import the middleware
+const authenticateToken = require('../middleware/auth');
 
 
 /**
